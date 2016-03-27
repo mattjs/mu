@@ -10,6 +10,6 @@ the library can be built by running the following command
   bazel build :mu
 ```
 
-Which will output a binary to `bazel-bin/src/libmy.jar`.
+Which will output a binary to `bazel-bin/src/libmu.jar`.
 
 Check out a test app [here] (https://github.com/mattjs/mu-test-app)
