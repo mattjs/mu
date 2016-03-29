@@ -1,22 +1,28 @@
 package com.mu.http;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public class HttpResponse {
 	private ResponseStatusCode code;
-	private String body;
+	private OutputStream outputStream;
 	
-	private static String CLOSE_CONNECTION =
+	private static String closeConnection =
 		new Header("Connection", "close").value();
-	private String contentType =
-		new ContentTypeHeader(ContentType.HTML, Charset.UTF8)
-			.getHeader().value();
 	private Header contentLength = new Header("Content-Length");
+	private Charset charset = Charset.UTF8;
+	private ContentType contentType;
 
 	public enum ContentType {
-		HTML("text/html");
+		TEXT("text/plain"),
+		HTML("text/html"),
+		CSS("text/css"),
+		PNG("image/png"),
+		PDF("application/pdf");
 		
 		private String value;
 		
@@ -28,6 +34,11 @@ public class HttpResponse {
 			return value;
 		}
 	}
+	
+	public static Map<String, ContentType> contentTypeByValue = 
+		Arrays.asList(ContentType.values())
+			.stream()
+			.collect(Collectors.toMap(ct -> ct.getValue(), ct -> ct));
 	
 	public enum Charset {
 		UTF8("UTF-8");
@@ -65,28 +76,51 @@ public class HttpResponse {
 		}
 	}
 	
-	public void writeHttpResonse(OutputStream stream) throws IOException {
-		PrintStream pstream = new PrintStream(stream);
-		pstream.println(code.getResponseHeader());
-		pstream.println(contentType);
-		pstream.println(contentLength.value());
-		pstream.println(CLOSE_CONNECTION);
-		pstream.println();
-		pstream.println(body);
+	public void setOuputStream(OutputStream outputStream) {
+		this.outputStream = outputStream;
+	}
+	
+	public OutputStream getOutputStream() {
+		return outputStream;
+	}
+	
+	public void renderHTML(String html) {
+		setContentLength(html.length());
+		contentType = ContentType.HTML;
+		PrintStream pstream = writeHeaders();
+		pstream.println(html);
 		pstream.flush();
 		pstream.close();
+	}
+	
+	public PrintStream writeHeaders() {
+		PrintStream pstream = new PrintStream(outputStream);
+		pstream.println(code.getResponseHeader());
+		pstream.println(getContentTypeHeader().value());
+		pstream.println(contentLength.value());
+		pstream.println(closeConnection);
+		pstream.println();
+		pstream.flush();
+		return pstream;
+	}
+	
+	private Header getContentTypeHeader() {
+		return new ContentTypeHeader(contentType, charset).getHeader();
 	}
 	
 	public void setResponseStatusCode(ResponseStatusCode code) {
 		this.code = code;
 	}
-	
-	public void setBody(String body) {
-		this.body = body;
-		contentLength.setValue(String.valueOf(body.length()));
+
+	public void setContentType(ContentType contentType) {
+		this.contentType = contentType;
 	}
 	
-	public void setContentType(ContentTypeHeader contentTypeHeader) {
-		contentType = contentTypeHeader.getHeader().value();
+	public static ContentType getContentTypeByValue(String contentType) {
+		return contentTypeByValue.get(contentType);
+	}
+	
+	public void setContentLength(long bytes) {
+		contentLength.setValue(String.valueOf(bytes));
 	}
 }
