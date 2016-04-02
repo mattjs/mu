@@ -65,7 +65,8 @@ public class StaticServer {
 	
 	private enum Extension {
 		CSS(".css", ContentType.CSS),
-		PDF(".pdf", ContentType.PDF);
+		PDF(".pdf", ContentType.PDF),
+		JS(".js", ContentType.JS);
 		
 		private String extension;
 		private ContentType contentType;

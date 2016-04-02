@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 
 import com.mu.Controller;
 import com.mu.http.HttpRequest;
+import com.mu.http.HttpResponse;
 
 /**
  * TODO(mattjs) Support multiple request types at same route
@@ -43,11 +44,12 @@ public class Route {
 		return requestType;
 	}
 	
-	public String call(HttpRequest request) {
+	public String call(HttpRequest request, HttpResponse response) {
 		String result = null;
 		try {
 			Controller controller = (Controller)controllerClass.newInstance();
 			controller.setRequest(request);
+			controller.setResponse(response);
 			Method method = controller.getClass().getMethod(this.methodName);
 			result = (String) method.invoke(controller);
 		} catch (Exception e) {

@@ -22,7 +22,9 @@ public class HttpResponse {
 		HTML("text/html"),
 		CSS("text/css"),
 		PNG("image/png"),
-		PDF("application/pdf");
+		PDF("application/pdf"),
+		JS("text/javascript"),
+		JSON("application/json");
 		
 		private String value;
 		
@@ -85,12 +87,16 @@ public class HttpResponse {
 	}
 	
 	public void renderHTML(String html) {
-		setContentLength(html.length());
 		contentType = ContentType.HTML;
+		renderText(html);
+	}
+	
+	public void renderText(String text) {
+		setContentLength(text.length());
 		PrintStream pstream = writeHeaders();
-		pstream.println(html);
+		pstream.println(text);
 		pstream.flush();
-		pstream.close();
+		pstream.close();		
 	}
 	
 	public PrintStream writeHeaders() {

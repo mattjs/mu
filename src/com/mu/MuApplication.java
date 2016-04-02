@@ -28,15 +28,12 @@ public class MuApplication {
 			StaticServer.serve(request, response);
 		} else {
 			Route route = router.route(request.getRoute());
-			String html;
 			if (route != null && route.getRequestType() == request.getRequestType()) {
-				html = route.call(request);
-				response.setResponseStatusCode(ResponseStatusCode.OK);
+				route.call(request, response);
 			} else {
-				html = "Route not found";
 				response.setResponseStatusCode(ResponseStatusCode.NotFound);
+				response.renderHTML("Route not found");
 			}
-			response.renderHTML(html);
 		}
 	}
 	
