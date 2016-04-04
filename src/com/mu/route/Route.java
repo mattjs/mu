@@ -4,24 +4,22 @@ import java.lang.reflect.Method;
 
 import com.mu.Controller;
 import com.mu.http.HttpRequest;
+import com.mu.http.HttpRequest.Url;
 import com.mu.http.HttpResponse;
 
-/**
- * TODO(mattjs) Support multiple request types at same route
- */
 public class Route {
 	private HttpRequest.RequestType requestType;
-	private String route;
 	private String controllerName;
 	private String methodName;
 	private Class<? extends Controller> controllerClass;
+	private Url url;
 	
 	public static Route from(String str) {
 		Route route = new Route();
 		str = str.replaceAll("\\s+", " ");
 		String[] parts = str.split(" ");
 		route.requestType = HttpRequest.RequestType.valueOf(parts[0]);
-		route.route = parts[1];
+		route.url = new Url(parts[1]);
 		String[] controllerAndMethod = parts[2].split("\\.");
 		route.controllerName = controllerAndMethod[0];
 		route.methodName = controllerAndMethod[1];
@@ -32,8 +30,8 @@ public class Route {
 		this.controllerClass = clazz;
 	}
 	
-	public String getRoute() {
-		return route;
+	public Url getUrl() {
+		return url;
 	}
 	
 	public String getControllerName() {
@@ -57,5 +55,10 @@ public class Route {
 			e.printStackTrace();
 		}
 		return result;
+	}
+	
+	@Override
+	public String toString() {
+		return requestType + " " + url;
 	}
 }

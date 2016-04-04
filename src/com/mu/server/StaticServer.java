@@ -24,13 +24,13 @@ public class StaticServer {
 	private static String UP_DIR = "..";
 	
 	public static void serve(HttpRequest request, HttpResponse response) {
-		System.out.println("Static serving : " + request.getRoute());
-		if (request.getRoute().contains(UP_DIR)) {
+		System.out.println("Static serving : " + request.getUrl().getPathName());
+		if (request.getUrl().getPathName().contains(UP_DIR)) {
 			response.setResponseStatusCode(ResponseStatusCode.BadRequest);
 			response.renderHTML("Bad Request");
 			return;
 		}
-		File f = new File(request.getRoute().substring(1));
+		File f = new File(request.getUrl().getPathName().substring(1));
 		if (f.exists()) {
 			try {
 				response.setResponseStatusCode(ResponseStatusCode.OK);
@@ -56,16 +56,15 @@ public class StaticServer {
 	private static ContentType guessContentType(File f) throws IOException {
 		BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f));
 		String guess = URLConnection.guessContentTypeFromStream(bis);
-		ContentType contentType = HttpResponse.getContentTypeByValue(guess);
+		ContentType contentType = HttpResponse.CONTENT_TYPE_BY_MIME_TYPE.get(guess);
 		if (contentType == null) {
-			contentType = guessTextFileByExtension(f.getName());
+			contentType = guessFileByExtension(f.getName());
 		}
 		return contentType;
 	}
 	
 	private enum Extension {
 		CSS(".css", ContentType.CSS),
-		PDF(".pdf", ContentType.PDF),
 		JS(".js", ContentType.JS);
 		
 		private String extension;
@@ -90,7 +89,7 @@ public class StaticServer {
 			.stream()
 			.collect(Collectors.toMap(e -> e.getExtension(), e -> e.getContentType()));
 	
-	private static ContentType guessTextFileByExtension(String fileName) {
+	private static ContentType guessFileByExtension(String fileName) {
 		ContentType contentType = null;
 		int lastIndex = fileName.lastIndexOf(".");
 		if (lastIndex != -1) {

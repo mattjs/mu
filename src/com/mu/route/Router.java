@@ -6,13 +6,21 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 import com.mu.Controller;
+import com.mu.http.HttpRequest;
 
+/**
+ * TODO(mattjs) Do some validation when routes are parsed.
+ * ex. Check for duplicate routes
+ */
 public class Router {
 	private String ROUTE_PATH = "conf/routes";
 	
-	private Map<String, Route> routes = new HashMap<>();
+	private Match match = new Match();
+	private List<Route> routes = new ArrayList<>();
 	private Map<String, Class<? extends Controller>> controllers = new HashMap<>();
 	
 	public Router() {
@@ -29,7 +37,7 @@ public class Router {
 	@SuppressWarnings("unchecked")
 	private void loadControllers() throws Exception {
 		ClassLoader classLoader = Router.class.getClassLoader();
-		for (Route route : routes.values()) {
+		for (Route route : routes) {
 			if (!controllers.containsKey(route.getControllerName())) {
 				Class<? extends Controller> clazz =
 					(Class<? extends Controller>) classLoader.loadClass("controllers." + route.getControllerName());
@@ -60,10 +68,19 @@ public class Router {
 	
 	private void newRoute(String line) {
 		Route route = Route.from(line);
-		routes.put(route.getRoute(), route);
+		routes.add(route);
+		match.addRoute(route);
 	}
 	
-	public Route route(String route) {
-		return routes.get(route);
+	public Route route(HttpRequest request) {
+		List<Route> routes = match.findRoutes(request.getUrl().getPathName());
+		if (routes != null) {
+			for (Route route : routes) {
+				if (route.getRequestType() == request.getRequestType()) {
+					return route;
+				}
+			}
+		}
+		return null;
 	}
 }

@@ -26,21 +26,21 @@ public class HttpResponse {
 		JS("text/javascript"),
 		JSON("application/json");
 		
-		private String value;
+		private String mimeType;
 		
 		private ContentType(String value) {
-			this.value = value;
+			this.mimeType = value;
 		}
 
-		public String getValue() {
-			return value;
+		public String getMimeType() {
+			return mimeType;
 		}
 	}
 	
-	public static Map<String, ContentType> contentTypeByValue = 
+	public static final Map<String, ContentType> CONTENT_TYPE_BY_MIME_TYPE = 
 		Arrays.asList(ContentType.values())
 			.stream()
-			.collect(Collectors.toMap(ct -> ct.getValue(), ct -> ct));
+			.collect(Collectors.toMap(ct -> ct.getMimeType(), ct -> ct));
 	
 	public enum Charset {
 		UTF8("UTF-8");
@@ -70,7 +70,7 @@ public class HttpResponse {
 		}
 		
 		public String getHeaderValue() {
-			String value = contentType.getValue();
+			String value = contentType.getMimeType();
 			if (charset != null) {
 				value += "; charset=" + charset.getValue();
 			}
@@ -120,10 +120,6 @@ public class HttpResponse {
 
 	public void setContentType(ContentType contentType) {
 		this.contentType = contentType;
-	}
-	
-	public static ContentType getContentTypeByValue(String contentType) {
-		return contentTypeByValue.get(contentType);
 	}
 	
 	public void setContentLength(long bytes) {

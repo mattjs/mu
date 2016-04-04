@@ -18,16 +18,16 @@ public class MuApplication {
 	}
 	
 	public void handleRequest(HttpRequest request, HttpResponse response) {
-		if (request.getRoute().length() > MAX_URL_LENGTH) {
+		if (request.getUrl().length() > MAX_URL_LENGTH) {
 			response.setResponseStatusCode(ResponseStatusCode.BadRequest);
 			response.renderHTML("Bad Request");
 			return;
 		}
 		
-		if (request.getRoute().startsWith(StaticServer.PUBLIC_FOLDER)) {
+		if (request.getUrl().getPathName().startsWith(StaticServer.PUBLIC_FOLDER)) {
 			StaticServer.serve(request, response);
 		} else {
-			Route route = router.route(request.getRoute());
+			Route route = router.route(request);
 			if (route != null && route.getRequestType() == request.getRequestType()) {
 				route.call(request, response);
 			} else {
