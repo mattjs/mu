@@ -5,7 +5,7 @@ import com.mu.http.HttpResponse;
 import com.mu.http.ResponseStatusCode;
 import com.mu.http.HttpResponse.ContentType;
 
-public class Controller {
+public abstract class Controller {
 	private HttpRequest request;
 	private HttpResponse response;
 	

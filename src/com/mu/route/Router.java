@@ -64,6 +64,7 @@ public class Router {
 		} else {
 			System.out.println("Routes file not found");
 		}
+		System.out.println(match.partial);
 	}
 	
 	private void newRoute(String line) {
