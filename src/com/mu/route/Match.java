@@ -9,86 +9,93 @@ import com.mu.route.Route.Fragment;
 import java.util.HashMap;
 
 public class Match {
-	PartialMatch partial = new PartialMatch(new Fragment(""));
-	
-	private static class PartialMatch {
-		public List<Fragment> fragments;
-		public List<Route> matches = new ArrayList<>();
-		public Map<String, PartialMatch> childrenByFirstFragment = new HashMap<>();
-		
-		public PartialMatch(Fragment fragment) {
-			 fragments = new ArrayList<>();
-			 fragments.add(fragment);
-		}
-		
-		public PartialMatch(List<Fragment> fragments) {
-			this.fragments = fragments;
-		}
-		
-		public void addRoute(Route route) {
-			System.out.println("Add route : " + route.getFragments());
-			List<Fragment> remaining = route.getFragments()
-				.subList(fragments.size(), route.getFragments().size());
-			if (!remaining.isEmpty()) {
-				PartialMatch partial;
-				String value = remaining.get(0).getValue();
-				if (childrenByFirstFragment.containsKey(value)) {
-					partial = childrenByFirstFragment.get(value);
-				} else {
-					partial = new PartialMatch(route.getFragments()
-						.subList(0, fragments.size() + 1));
-					childrenByFirstFragment.put(value, partial);
-				}
-				partial.addRoute(route);
-			} else {
-				matches.add(route);
-			}
-		}
-		
-		public List<Route> findRoutes(String pathName) {
-			return findRoutes(Fragment.from(pathName));
-		}
-		
-		private List<Route> findRoutes(List<Fragment> generated) {
-			if (generated.size() == fragments.size()) {
-				if (matches(generated)) {
-					return matches;
-				}
-			} else {
-				int index = fragments.size();
-				String key = generated.get(index).getValue();
-				if (childrenByFirstFragment.containsKey(key)){
-					return childrenByFirstFragment.get(key).findRoutes(generated);
-				}
-			}
-			return null;
-		}
-		
-		private boolean matches(List<Fragment> generated) {
-			for (int i = 0; i < fragments.size(); i++) {
-				if (!fragments.get(i).matches(generated.get(i).getValue())) {
-					return false;
-				}
-			}
-			return true;
-		}
-		
-		@Override
-		public String toString() {
-			StringBuilder builder = new StringBuilder();
-			builder.append("Fragments : '" + fragments + "'\nMatching Routes : " + matches);
-			childrenByFirstFragment.values().stream().forEach(pm -> {
-				builder.append(pm.toString());
-			});
-			return builder.toString();
-		}
-	}
-	
-	public void addRoute(Route route) {
-		partial.addRoute(route);
-	}
-	
-	public List<Route> findRoutes(String pathName) {
-		return partial.findRoutes(pathName);
-	}
+    PartialMatch partial = new PartialMatch(new Fragment(""));
+    
+    private static class PartialMatch {
+        public List<Fragment> fragments;
+        public List<Route> matches = new ArrayList<>();
+        // Children
+        public Map<String, PartialMatch> determinte = new HashMap<>();
+        public Map<String, PartialMatch> parameters = new HashMap<>();
+        
+        public PartialMatch(Fragment fragment) {
+             fragments = new ArrayList<>();
+             fragments.add(fragment);
+        }
+        
+        private Fragment getLastFragment() {
+            return this.fragments.get(this.fragments.size() - 1);
+        }
+        
+        public PartialMatch(List<Fragment> fragments) {
+            this.fragments = fragments;
+        }
+        
+        public void addRoute(Route route) {
+            List<Fragment> remaining = getRemaining(route);
+            if (!remaining.isEmpty()) {
+                PartialMatch partial;
+                Fragment fragment = remaining.get(0);
+                if (fragment.isParam()) {
+                    if (parameters.containsKey(fragment.getValue())) {
+                        partial = parameters.get(fragment.getValue());
+                    } else {
+                        partial = new PartialMatch(getChildFragments(route));
+                        parameters.put(fragment.getValue(), partial);
+                    }
+                } else {
+                    if (determinte.containsKey(fragment.getValue())) {
+                        partial = determinte.get(fragment.getValue());
+                    } else {
+                        partial = new PartialMatch(getChildFragments(route));
+                        determinte.put(fragment.getValue(), partial);
+                    }
+                }
+                partial.addRoute(route);
+            } else {
+                this.matches.add(route);
+            }
+        }
+        
+        private List<Fragment> getRemaining(Route route) {
+            return route.getFragments()
+                .subList(this.fragments.size(), route.getFragments().size());
+        }
+        
+        private List<Fragment> getChildFragments(Route route) {
+            return route.getFragments().subList(0, this.fragments.size() + 1);
+        }
+        
+        public List<Route> findRoutes(String pathName) {
+            return this.findRoutes(Fragment.getPathNameParts(pathName));
+        }
+        
+        private List<Route> findRoutes(List<String> pathNameParts) {
+            if (pathNameParts.size() == this.fragments.size()) {
+                return this.matches;
+            } else {
+                int index = this.fragments.size();
+                String key = pathNameParts.get(index);
+                if (this.determinte.containsKey(key)){
+                    return this.determinte.get(key).findRoutes(pathNameParts);
+                } else {
+                    List<Route> routes = new ArrayList<>();
+                    for (PartialMatch partial : this.parameters.values()) {
+                        if (partial.getLastFragment().matches(key)) {
+                            routes.addAll(partial.findRoutes(pathNameParts));
+                        }
+                    }
+                    return routes;
+                }
+            }
+        }
+    }
+    
+    public void addRoute(Route route) {
+        partial.addRoute(route);
+    }
+    
+    public List<Route> findRoutes(String pathName) {
+        return partial.findRoutes(pathName);
+    }
 }
