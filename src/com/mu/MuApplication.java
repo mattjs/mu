@@ -28,7 +28,7 @@ public class MuApplication {
             StaticServer.serve(request, response);
         } else {
             Route route = router.route(request);
-            if (route != null && route.getRequestType() == request.getRequestType()) {
+            if (route != null) {
                 route.call(request, response);
             } else {
                 response.setResponseStatusCode(ResponseStatusCode.NotFound);

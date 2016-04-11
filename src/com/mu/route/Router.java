@@ -11,8 +11,8 @@ import java.util.ArrayList;
 
 import com.mu.Controller;
 import com.mu.http.HttpRequest;
-import com.mu.route.Route.Fragment;
-import com.mu.route.Route.RouteException;
+import com.mu.route.Tree.RouteMatch;
+import com.mu.route.TreeFactory.RouteException;
 
 /**
  * TODO(mattjs) Do some validation when routes are parsed.
@@ -21,8 +21,9 @@ import com.mu.route.Route.RouteException;
 public class Router {
     private String ROUTE_PATH = "conf/routes";
     
-    private Match match = new Match();
+    //private Match match = new Match();
     private List<Route> routes = new ArrayList<>();
+    private Tree tree;
     private Map<String, Class<? extends Controller>> controllers = new HashMap<>();
     
     public Router() {
@@ -63,6 +64,7 @@ public class Router {
                 inputLine = reader.readLine();
             }
             reader.close();
+            buildTree();
         } else {
             System.out.println("Routes file not found");
         }
@@ -70,23 +72,26 @@ public class Router {
     
     private void newRoute(String line) {
         Route route = Route.from(line);
-        try {
-            for (Fragment fragment : route.getFragments()) {
-                fragment.validate();
-            }
-        } catch (RouteException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
         routes.add(route);
-        match.addRoute(route);
+    }
+    
+    private void buildTree() {
+    	try {
+			this.tree = TreeFactory.build(this.routes);
+		} catch (RouteException e) {
+			System.out.println("Error parsing routes");
+			System.out.println(e);
+		}
     }
     
     public Route route(HttpRequest request) {
-        List<Route> routes = match.findRoutes(request.getUrl().getPathName());
-        if (routes != null) {
-            for (Route route : routes) {
+    	String path = request.getUrl().getPathName();
+    	List<String> pathParts = TreeFactory.getPathNameParts(path);
+        RouteMatch routeMatch = tree.matchPath(pathParts);
+        if (routeMatch.matched) {
+            for (Route route : routeMatch.routes) {
                 if (route.getRequestType() == request.getRequestType()) {
+                	System.out.println(routeMatch.params);
                     return route;
                 }
             }
