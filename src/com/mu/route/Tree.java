@@ -11,7 +11,7 @@ public class Tree {
 	public Tree() {
 	  this.root = new Leaf(
 		0,
-		Param.from(""));
+		PathParam.from(""));
 	}
 	
 	public static class RouteMatch {
@@ -38,7 +38,7 @@ public class Tree {
 		}
 	}
 	
-	public void add(Route route, List<Param> params) {
+	public void add(Route route, List<PathParam> params) {
 		this.root.add(route, params);
 	}
 	
