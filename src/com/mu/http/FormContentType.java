@@ -8,10 +8,10 @@ import com.mu.util.Charset;
 
 /**
  * HttpRequest Content Type
- * TODO: support other content types
  */
-public class ContentType {
+public class FormContentType {
     public enum Value {
+        MULTIPART_FORM_DATA("multipart/form-data"),  
         FORM_URL_ENCODED("application/x-www-form-urlencoded");
         
         private String headerType;
@@ -33,7 +33,7 @@ public class ContentType {
     private final Value value;
     private final Charset charset;
     
-    public static ContentType from(Header header) {
+    public static FormContentType from(Header header) {
         String[] parts = header.getValue().split(";");
         String headerType = parts[0].trim();
         Value value = CONTENT_TYPE_VALUE_BY_HEADER_TYPE.get(headerType);
@@ -44,10 +44,10 @@ public class ContentType {
                 charset = Charset.getByValue(parts[1].trim());
             }
         }
-        return new ContentType(value, charset);
+        return new FormContentType(value, charset);
     }
     
-    private ContentType(Value value, Charset charset) {
+    private FormContentType(Value value, Charset charset) {
         this.value = value;
         this.charset = charset != null ? charset : Charset.UTF8;
     }

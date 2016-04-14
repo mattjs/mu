@@ -63,7 +63,7 @@ public class HttpRequest {
     private Url url;
     private List<Header> headers = new ArrayList<>();
     private Long contentLength;
-    private ContentType contentType;
+    private FormContentType contentType;
     private Map<String, String> postParams = new HashMap<>();
     
     public HttpRequest(InputStream stream) throws IOException {
@@ -86,7 +86,7 @@ public class HttpRequest {
         if (header.getKey().equals("Content-Length")) {
             contentLength = Long.valueOf(header.getValue());
         } else if (header.getKey().equals("Content-Type")) {
-            contentType = ContentType.from(header);
+            contentType = FormContentType.from(header);
         }
     }
     
@@ -102,9 +102,9 @@ public class HttpRequest {
         }
     }
     
-    // TODO: support other content types
+    // TODO: support multipart form data
     private void parseBody(String body) {
-        if (contentType.getValue() == ContentType.Value.FORM_URL_ENCODED) {
+        if (contentType.getValue() == FormContentType.Value.FORM_URL_ENCODED) {
             postParams = parseQueryString(body, contentType.getCharset());
         }
     }
