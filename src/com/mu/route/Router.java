@@ -84,6 +84,7 @@ public class Router {
 		}
     }
     
+    // TODO: cache route matches
     public Route route(HttpRequest request) {
     	String path = request.getUrl().getPathName();
     	List<String> pathParts = TreeFactory.getPathNameParts(path);
@@ -91,7 +92,6 @@ public class Router {
         if (routeMatch.matched) {
             for (Route route : routeMatch.routes) {
                 if (route.getRequestType() == request.getRequestType()) {
-                	System.out.println(routeMatch.params);
                     return route;
                 }
             }

@@ -7,15 +7,17 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.mu.util.Charset;
+
 public class HttpResponse {
     private ResponseStatusCode code;
     private OutputStream outputStream;
     
-    private static String closeConnection =
+    private static final String CONN_CLOSE_HEADER_STRING =
         new Header("Connection", "close").value();
-    private Header contentLength = new Header("Content-Length");
     private Charset charset = Charset.UTF8;
     private ContentType contentType;
+    private long contentLengthInBytes;
 
     public enum ContentType {
         TEXT("text/plain"),
@@ -41,20 +43,6 @@ public class HttpResponse {
         Arrays.asList(ContentType.values())
             .stream()
             .collect(Collectors.toMap(ct -> ct.getMimeType(), ct -> ct));
-    
-    public enum Charset {
-        UTF8("UTF-8");
-        
-        private String value;
-        
-        private Charset(String value) {
-            this.value = value;
-        }
-        
-        public String getValue() {
-            return value;
-        }
-    }
     
     public class ContentTypeHeader {
         private ContentType contentType;
@@ -92,7 +80,7 @@ public class HttpResponse {
     }
     
     public void renderText(String text) {
-        setContentLength(text.length());
+        this.contentLengthInBytes = text.length();
         PrintStream pstream = writeHeaders();
         pstream.println(text);
         pstream.flush();
@@ -103,8 +91,8 @@ public class HttpResponse {
         PrintStream pstream = new PrintStream(outputStream);
         pstream.println(code.getResponseHeader());
         pstream.println(getContentTypeHeader().value());
-        pstream.println(contentLength.value());
-        pstream.println(closeConnection);
+        pstream.println(new Header("Content-Length", String.valueOf(contentLengthInBytes)).value());
+        pstream.println(CONN_CLOSE_HEADER_STRING);
         pstream.println();
         pstream.flush();
         return pstream;
@@ -114,15 +102,15 @@ public class HttpResponse {
         return new ContentTypeHeader(contentType, charset).getHeader();
     }
     
+    public void setContentLength(long contentLengthInBytes) {
+        this.contentLengthInBytes = contentLengthInBytes;
+    }
+    
     public void setResponseStatusCode(ResponseStatusCode code) {
         this.code = code;
     }
 
     public void setContentType(ContentType contentType) {
         this.contentType = contentType;
-    }
-    
-    public void setContentLength(long bytes) {
-        contentLength.setValue(String.valueOf(bytes));
     }
 }

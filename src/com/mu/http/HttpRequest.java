@@ -4,8 +4,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.mu.util.Charset;
 
 public class HttpRequest {
     public enum RequestType {
@@ -19,6 +25,7 @@ public class HttpRequest {
         private String pathName;
         private String queryString;
         private String route;
+        private Map<String, String> getParams = new HashMap<>();
         
         public Url(String route) {
             this.route = route;
@@ -26,6 +33,7 @@ public class HttpRequest {
             this.pathName = parts[0];
             if (parts.length > 1) {
                 this.queryString = parts[1];
+                this.getParams = parseQueryString(this.queryString, Charset.UTF8);
             }
         }
         
@@ -53,7 +61,10 @@ public class HttpRequest {
     
     private RequestType requestType;
     private Url url;
-    private List<Header> headers = new ArrayList<>(); 
+    private List<Header> headers = new ArrayList<>();
+    private Long contentLength;
+    private ContentType contentType;
+    private Map<String, String> postParams = new HashMap<>();
     
     public HttpRequest(InputStream stream) throws IOException {
         InputStreamReader raw = new InputStreamReader(stream);
@@ -63,10 +74,59 @@ public class HttpRequest {
             if (requestType == null) {
                 parseRouteAndType(inputLine);
             } else {
-                headers.add(Header.parse(inputLine));
+                newHeader(inputLine);
             }
             inputLine = reader.readLine();
         }
+        maybeReadAdditionalData(reader);
+    }
+    
+    private void newHeader(String inputLine) {
+        Header header = Header.parse(inputLine);
+        if (header.getKey().equals("Content-Length")) {
+            contentLength = Long.valueOf(header.getValue());
+        } else if (header.getKey().equals("Content-Type")) {
+            contentType = ContentType.from(header);
+        }
+    }
+    
+    private void maybeReadAdditionalData(BufferedReader reader) throws IOException {
+        if (contentLength != null) {
+            StringBuilder body = new StringBuilder();
+            int c = 0;
+            for (int i = 0; i < contentLength; i++) {
+                c = reader.read();
+                body.append((char) c);
+            }
+            parseBody(body.toString());
+        }
+    }
+    
+    // TODO: support other content types
+    private void parseBody(String body) {
+        if (contentType.getValue() == ContentType.Value.FORM_URL_ENCODED) {
+            postParams = parseQueryString(body, contentType.getCharset());
+        }
+    }
+    
+    private static Map<String, String> parseQueryString(String str, Charset charset) {
+        Map<String, String> result = new HashMap<>();
+        try {
+            String[] params = str.split("&");
+            for (int i = 0; i < params.length; i++) {
+                String[] parts = params[i].split("=");
+                if (parts.length > 0) {
+                    String value = "";
+                    if (parts.length > 1) {
+                        value = URLDecoder.decode(parts[1], charset.getValue());
+                    }
+                    result.put(parts[0], value);
+                }
+            }
+        } catch (UnsupportedEncodingException e) {
+            // TODO handle this
+        }
+        return result;
     }
     
     private void parseRouteAndType(String value) {
@@ -85,5 +145,13 @@ public class HttpRequest {
     
     public List<Header> getHeaders() {
         return headers;
+    }
+    
+    public Map<String, String> getPostParams() {
+        return postParams;
+    }
+    
+    public Map<String, String> getGetParams() {
+        return url.getParams;
     }
 }
