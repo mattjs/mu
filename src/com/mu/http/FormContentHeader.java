@@ -9,14 +9,14 @@ import com.mu.util.Charset;
 /**
  * HttpRequest Content Type
  */
-public class FormContentType {
-    public enum Value {
+public class FormContentHeader {
+    public enum FormContentType {
         MULTIPART_FORM_DATA("multipart/form-data"),  
         FORM_URL_ENCODED("application/x-www-form-urlencoded");
         
         private String headerType;
         
-        private Value(String headerType) {
+        private FormContentType(String headerType) {
             this.headerType = headerType;
         }
         
@@ -25,18 +25,18 @@ public class FormContentType {
         }
     }
     
-    private static final Map<String, Value> CONTENT_TYPE_VALUE_BY_HEADER_TYPE =
-        Arrays.asList(Value.values())
+    private static final Map<String, FormContentType> FORM_CONTENT_TYPE_BY_HEADER_TYPE =
+        Arrays.asList(FormContentType.values())
             .stream()
-            .collect(Collectors.toMap(Value::getHeaderType, ct -> ct));
+            .collect(Collectors.toMap(FormContentType::getHeaderType, ct -> ct));
     
-    private final Value value;
+    private final FormContentType value;
     private final Charset charset;
     
-    public static FormContentType from(Header header) {
+    public static FormContentHeader from(Header header) {
         String[] parts = header.getValue().split(";");
         String headerType = parts[0].trim();
-        Value value = CONTENT_TYPE_VALUE_BY_HEADER_TYPE.get(headerType);
+        FormContentType value = FORM_CONTENT_TYPE_BY_HEADER_TYPE.get(headerType);
         Charset charset = null;
         if (parts.length > 1) {
             parts = parts[1].split("=");
@@ -44,15 +44,15 @@ public class FormContentType {
                 charset = Charset.getByValue(parts[1].trim());
             }
         }
-        return new FormContentType(value, charset);
+        return new FormContentHeader(value, charset);
     }
     
-    private FormContentType(Value value, Charset charset) {
+    private FormContentHeader(FormContentType value, Charset charset) {
         this.value = value;
         this.charset = charset != null ? charset : Charset.UTF8;
     }
     
-    public Value getValue() {
+    public FormContentType getValue() {
         return value;
     }
     
