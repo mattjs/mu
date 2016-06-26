@@ -6,8 +6,8 @@ import com.mu.http.ResponseStatusCode;
 import com.mu.http.HttpResponse.ContentType;
 
 public abstract class Controller {
-    private HttpRequest request;
-    private HttpResponse response;
+    protected HttpRequest request;
+    protected HttpResponse response;
     
     public HttpRequest getRequest() {
         return request;

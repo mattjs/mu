@@ -109,6 +109,7 @@ public class HttpRequest {
         }
     }
     
+    // TODO: Duplicate values are overwritten currently
     private static Map<String, String> parseQueryString(String str, Charset charset) {
         Map<String, String> result = new HashMap<>();
         try {

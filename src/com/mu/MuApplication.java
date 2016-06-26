@@ -1,9 +1,12 @@
 package com.mu;
 
+import java.lang.reflect.InvocationTargetException;
+
 import com.mu.http.HttpRequest;
 import com.mu.http.HttpResponse;
 import com.mu.http.ResponseStatusCode;
 import com.mu.route.Route;
+import com.mu.route.Route.RouteException;
 import com.mu.route.Router;
 import com.mu.server.ServerRunner;
 import com.mu.server.StaticServer;
@@ -29,7 +32,20 @@ public class MuApplication {
         } else {
             Route route = router.route(request);
             if (route != null) {
-                route.call(request, response);
+                try {
+                    route.call(request, response);
+                } catch (RouteException e) {
+                    response.setResponseStatusCode(ResponseStatusCode.InternalServerError);
+                    response.renderHTML("500 Error Occurred");
+                    System.out.println("Routing exception");
+                    if (e.original instanceof InvocationTargetException) {
+                        Throwable throwable = ((InvocationTargetException)e.original).getTargetException();
+                        throwable.printStackTrace();
+                    } else {
+                        System.out.println(e.original);
+                        e.printStackTrace();
+                    }
+                }
             } else {
                 response.setResponseStatusCode(ResponseStatusCode.NotFound);
                 response.renderHTML("Route not found");

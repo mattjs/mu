@@ -14,6 +14,13 @@ public class Route {
     private Class<? extends Controller> controllerClass;
     private String path;
     private List<String> pathParts;
+    
+    public class RouteException extends Exception {
+        public Exception original;
+        public RouteException(Exception original) {
+            this.original = original;
+        }
+    }
   
     public static Route from(String str) {
         Route route = new Route();
@@ -44,18 +51,16 @@ public class Route {
         return requestType;
     }
     
-    public String call(HttpRequest request, HttpResponse response) {
-        String result = null;
+    public void call(HttpRequest request, HttpResponse response) throws RouteException {
         try {
             Controller controller = (Controller)controllerClass.newInstance();
             controller.setRequest(request);
             controller.setResponse(response);
             Method method = controller.getClass().getMethod(this.methodName);
-            result = (String) method.invoke(controller);
+            method.invoke(controller);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RouteException(e);
         }
-        return result;
     }
     
     public List<String> getPathParts() {
